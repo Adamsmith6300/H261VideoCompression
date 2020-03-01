@@ -63,7 +63,7 @@ namespace assignment2
 
         private void test_Click(object sender, EventArgs e)
         {
-         
+
             OpenFileDialog fileDlg = new OpenFileDialog();
             fileDlg.Filter = "Image Files|*.bmp;*.shrunk;";
 
@@ -80,13 +80,15 @@ namespace assignment2
                     IaFrame.prepFrameForShrink();
                     ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
                     bool success = sf.writeFile("dog.shrunk");
-                    Debug.WriteLine(success?"File Written":"Error");
+                    Debug.WriteLine(success ? "File Written" : "Error");
                 }
                 if (ext == ".shrunk")
                 {
                     ShrunkFileIO sf = new ShrunkFileIO(filename);
                     IaFrame = sf.ioFrame;
                     this.pictureBox1.Image = IaFrame.ogBmp;
+                    IaFrame.setCbCrBmp();
+                    this.pictureBox2.Image = IaFrame.cbBmp;
                 }
             }
 
@@ -96,7 +98,8 @@ namespace assignment2
             //bool success = sf.writeFile("dog");
             //Debug.WriteLine(success?"File Written":"Error");
 
-            //List<List<double>> testVals = new List<List<double>> {
+            //List<List<List<double>>> testVals = new List<List<List<double>>> {
+            //new List<List<double>> {
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -105,7 +108,60 @@ namespace assignment2
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
+            //},
+            //new List<List<double>>{
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
+            //},
+            //new List<List<double>>
+            //{
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
+            //},
+            //new List<List<double>>
+            //{
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
+            //}
             //};
+            //IaFrame = new Frame();
+            //testVals = IaFrame.dctAllBlocks(testVals);
+            //testVals = IaFrame.quantizeAllBlocks(testVals, Frame.lumQTable);
+            ////IaFrame.printBlocks(testVals);
+            //List<sbyte> vals = IaFrame.zigZagAllBlocks(testVals);
+
+            //Debug.WriteLine("before:");
+            //vals = IaFrame.runLengthEncode(vals);
+            //for (int i = 0; i < vals.Count; i++)
+            //{
+            //    Debug.Write(vals[i] + ",");
+            //}
+            //vals = IaFrame.runLengthDecode(vals.ToArray());
+            //for (int i = 0; i < vals.Count; i++)
+            //{
+            //    Debug.Write(vals[i] + ",");
+            //}
+            //IaFrame = new Frame(vals.ToArray(), 16, 16);
+
+
         }
     }
 }

@@ -47,17 +47,22 @@ namespace assignment2
             height = h;
             decodeBytes();
         }
+        public Frame() { }
 
         public void decodeBytes()
         {
-            Debug.WriteLine("" + encoded.Length);
             List<sbyte> decoded = runLengthDecode(encoded);
-            int yCount = decoded.Count / 2;
-            int chromCount = yCount / 2;
+            Debug.WriteLine("Dec" + decoded.Count);
+            int yCount = (decoded.Count * 2)/ 3;
+            int chromCount = yCount / 4;
             this.ogBmp = new Bitmap(width, height);
             yCoded = decoded.GetRange(0, yCount);
             cbCoded = decoded.GetRange(yCount, chromCount);
-            crCoded = decoded.GetRange(yCount+chromCount, chromCount);
+            crCoded = decoded.GetRange(yCount + chromCount, chromCount);
+            //for (int i = 0; i < yCoded.Count; i++)
+            //{
+            //    Debug.Write(yCoded[i] + ",");
+            //}
             yBlocks = reverseZigZagAndBuildBlocks(yCoded);
             cbBlocks = reverseZigZagAndBuildBlocks(cbCoded);
             crBlocks = reverseZigZagAndBuildBlocks(crCoded);
@@ -68,8 +73,8 @@ namespace assignment2
             cbBlocks = reverseDctAllBlocks(cbBlocks);
             crBlocks = reverseDctAllBlocks(crBlocks);
             yDoubles = getPixelsFromBlocks(yBlocks, width, height);
-            cbDoubles = getPixelsFromBlocks(cbBlocks, width/2, height/2);
-            crDoubles = getPixelsFromBlocks(crBlocks, width/2, height/2);
+            cbDoubles = getPixelsFromBlocks(cbBlocks, width / 2, height / 2);
+            crDoubles = getPixelsFromBlocks(crBlocks, width / 2, height / 2);
             upsampleChrominance();
             convertToRGB();
         }
@@ -86,18 +91,18 @@ namespace assignment2
             yBlocks = quantizeAllBlocks(yBlocks, lumQTable);
             cbBlocks = quantizeAllBlocks(cbBlocks, chromQTable);
             crBlocks = quantizeAllBlocks(crBlocks, chromQTable);
-            yCoded = zigZagAndRleAllBlocks(yBlocks);
-            cbCoded = zigZagAndRleAllBlocks(cbBlocks);
-            crCoded = zigZagAndRleAllBlocks(crBlocks);
+            yCoded = zigZagAllBlocks(yBlocks);
+            cbCoded = zigZagAllBlocks(cbBlocks);
+            crCoded = zigZagAllBlocks(crBlocks);
+            Debug.WriteLine("enc"+ (yCoded.Count+ cbCoded.Count+ crCoded.Count));
+            yCoded = runLengthEncode(yCoded);
+            cbCoded = runLengthEncode(cbCoded);
+            crCoded = runLengthEncode(crCoded);
             List<sbyte> YCbCr = new List<sbyte>();
             YCbCr.AddRange(yCoded);
             YCbCr.AddRange(cbCoded);
             YCbCr.AddRange(crCoded);
             encoded = YCbCr.ToArray();
-            Debug.WriteLine("" + encoded.Length);
-            //Debug.WriteLine("DONE!");
-            //Debug.WriteLine("OGsize"+((ogBmp.Width*ogBmp.Height)*3));
-            //Debug.WriteLine("Encoded size"+(yCoded.Count+cbCoded.Count+crCoded.Count));
         }
 
 
@@ -256,14 +261,14 @@ namespace assignment2
                         }
                         else
                         {
-                            newCb[row].Add(newCb[row][col-1]);
+                            newCb[row].Add(newCb[row][col - 1]);
                             newCr[row].Add(newCr[row][col - 1]);
                         }
                     }
                 } else
                 {
-                    newCb.Add(this.cbDoubles[row-1]);
-                    newCr.Add(this.crDoubles[row-1]);
+                    newCb.Add(newCb[row - 1]);
+                    newCr.Add(newCr[row - 1]);
                 }
             }
             this.cbDoubles = newCb;
@@ -487,17 +492,18 @@ namespace assignment2
             return block;
         }
 
-        public List<sbyte> zigZagAndRleAllBlocks(List<List<List<double>>> blocks)
+        public List<sbyte> zigZagAllBlocks(List<List<List<double>>> blocks)
         {
             List<sbyte> encoded = new List<sbyte>();
             for (int i = 0; i < blocks.Count; i++)
             {
                 List<sbyte> temp = zigZag(blocks[i], 8, 8);
-                temp = runLengthEncode(temp);
+                //temp = runLengthEncode(temp);
                 encoded.AddRange(temp);
             }
             return encoded;
         }
+
 
         public List<List<List<double>>> reverseZigZagAndBuildBlocks(List<sbyte> decoded)
         {
@@ -805,7 +811,7 @@ namespace assignment2
                 }
                 encodedValues.Add(length);
                 encodedValues.Add(arr[col]);
-                col+=length;
+                col++;
             }
             return encodedValues;
         }
@@ -823,7 +829,7 @@ namespace assignment2
                     decodedValues.Add(val);
                     counter--;
                 }
-                col += (length+1);
+                col+=2;
             }
             return decodedValues;
         }
