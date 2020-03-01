@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,8 +16,8 @@ namespace assignment2
     {
 
         String filename;
-        IntraFrame IaFrame;
-        InterFrame IeFrame;
+        Frame IaFrame;
+        Frame IeFrame;
 
         public Form1()
         {
@@ -36,11 +37,11 @@ namespace assignment2
 
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
-                this.filename = fileDlg.FileName;
-                Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(fileDlg.FileName);
+                string filename = fileDlg.FileName;
+                Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                 IaFrame = new IntraFrame(bmp);
                 this.pictureBox1.Image = this.IaFrame.ogBmp;
-                
+                //ShrunkFileIO sf = new ShrunkFileIO();
             }
         }
 
@@ -62,15 +63,49 @@ namespace assignment2
 
         private void test_Click(object sender, EventArgs e)
         {
-            List<List<double>> testVals = new List<List<double>> {
-                new List<double> { 0, 1, 2, 3 },
-                new List<double> { 0, 1, 2, 3 },
-                new List<double> { 0, 1, 2, 3 },
-                new List<double> { 0, 1, 2, 3 }
-            };
-            List<List<double>> newVals = IaFrame.dct(testVals);
-            IaFrame.printDctValues(newVals);
-            
+         
+            OpenFileDialog fileDlg = new OpenFileDialog();
+            fileDlg.Filter = "Image Files|*.bmp;*.shrunk;";
+
+            if (fileDlg.ShowDialog() == DialogResult.OK)
+            {
+                string filename = fileDlg.FileName;
+                string ext = Path.GetExtension(filename);
+                Debug.WriteLine(ext);
+                if (ext == ".bmp")
+                {
+                    Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
+                    IaFrame = new IntraFrame(bmp);
+                    this.pictureBox1.Image = this.IaFrame.ogBmp;
+                    IaFrame.prepFrameForShrink();
+                    ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
+                    bool success = sf.writeFile("dog.shrunk");
+                    Debug.WriteLine(success?"File Written":"Error");
+                }
+                if (ext == ".shrunk")
+                {
+                    ShrunkFileIO sf = new ShrunkFileIO(filename);
+                    IaFrame = sf.ioFrame;
+                    this.pictureBox1.Image = IaFrame.ogBmp;
+                }
+            }
+
+            //ShrunkFileIO sf = new ShrunkFileIO();
+
+            //IaFrame.prepFrameForShrink();
+            //bool success = sf.writeFile("dog");
+            //Debug.WriteLine(success?"File Written":"Error");
+
+            //List<List<double>> testVals = new List<List<double>> {
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
+            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
+            //};
         }
     }
 }

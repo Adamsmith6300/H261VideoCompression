@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -13,44 +14,92 @@ namespace assignment2
         public Bitmap ogBmp { get; set; }
         public Bitmap cbBmp { get; set; }
         public Bitmap crBmp { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
         public List<List<double>> yDoubles { get; set; }
         public List<List<double>> cbDoubles { get; set; }
         public List<List<double>> crDoubles { get; set; }
-        public int[,] lumQTable { get; set; }
-        public int[,] chromQTable { get; set; }
         public List<List<List<double>>> yBlocks { get; set; }
         public List<List<List<double>>> cbBlocks { get; set; }
         public List<List<List<double>>> crBlocks { get; set; }
+        public List<sbyte> yCoded { get; set; }
+        public List<sbyte> cbCoded { get; set; }
+        public List<sbyte> crCoded { get; set; }
+        public sbyte[] encoded { get; set; }
 
         public Frame(Bitmap bmp)
         {
             this.ogBmp = bmp;
+            this.width = bmp.Width;
+            this.height = bmp.Height;
+            Debug.Write("width" + width);
+            Debug.Write("height" + height);
             this.cbBmp = new Bitmap(bmp.Width,bmp.Height);
             this.crBmp = new Bitmap(bmp.Width,bmp.Height);
             this.yDoubles = new List<List<double>>();
             this.cbDoubles = new List<List<double>>();
             this.crDoubles = new List<List<double>>();
-            lumQTable = new int[,] {
-                { 16, 11,  10, 16, 24, 40, 51, 61},
-                { 12, 12,  14, 19, 26, 58, 60, 55},
-                { 14, 13,  16, 24, 40, 57, 69, 56},
-                { 14, 17,  22, 29, 51, 87, 80, 62},
-                { 18, 22,  37, 56, 68, 109, 103, 77},
-                { 24, 35,  55, 64, 81, 104, 113, 92},
-                { 49, 64,  78, 87, 103, 121, 120, 101},
-                { 72, 92,  95, 98, 112, 100, 103, 99}
-            };
-            chromQTable = new int[,] {
-                { 17, 18, 24, 47, 99, 99, 99, 99},
-                { 18, 21, 26, 66, 99, 99, 99, 99},
-                { 24, 26, 56, 99, 99, 99, 99, 99},
-                { 47, 66, 99, 99, 99, 99, 99, 99},
-                { 99, 99, 99, 99, 99, 99, 99, 99},
-                { 99, 99, 99, 99, 99, 99, 99, 99},
-                { 99, 99, 99, 99, 99, 99, 99, 99},
-                { 99, 99, 99, 99, 99, 99, 99, 99}
-            };
         }
+
+        public Frame(sbyte[] sbytes, int w, int h){
+            encoded = sbytes;
+            width = w;
+            height = h;
+            decodeBytes();
+        }
+
+        public void decodeBytes()
+        {
+            Debug.WriteLine("" + encoded.Length);
+            List<sbyte> decoded = runLengthDecode(encoded);
+            int yCount = decoded.Count / 2;
+            int chromCount = yCount / 2;
+            this.ogBmp = new Bitmap(width, height);
+            yCoded = decoded.GetRange(0, yCount);
+            cbCoded = decoded.GetRange(yCount, chromCount);
+            crCoded = decoded.GetRange(yCount+chromCount, chromCount);
+            yBlocks = reverseZigZagAndBuildBlocks(yCoded);
+            cbBlocks = reverseZigZagAndBuildBlocks(cbCoded);
+            crBlocks = reverseZigZagAndBuildBlocks(crCoded);
+            yBlocks = reverseQuantizeAllBlocks(yBlocks, lumQTable);
+            cbBlocks = reverseQuantizeAllBlocks(cbBlocks, chromQTable);
+            crBlocks = reverseQuantizeAllBlocks(crBlocks, chromQTable);
+            yBlocks = reverseDctAllBlocks(yBlocks);
+            cbBlocks = reverseDctAllBlocks(cbBlocks);
+            crBlocks = reverseDctAllBlocks(crBlocks);
+            yDoubles = getPixelsFromBlocks(yBlocks, width, height);
+            cbDoubles = getPixelsFromBlocks(cbBlocks, width/2, height/2);
+            crDoubles = getPixelsFromBlocks(crBlocks, width/2, height/2);
+            upsampleChrominance();
+            convertToRGB();
+        }
+        public void prepFrameForShrink()
+        {
+            convertToYCbCr();
+            subsampleChrominance();
+            buildYBlocks();
+            buildCbBlocks();
+            buildCrBlocks();
+            yBlocks = dctAllBlocks(yBlocks);
+            cbBlocks = dctAllBlocks(cbBlocks);
+            crBlocks = dctAllBlocks(crBlocks);
+            yBlocks = quantizeAllBlocks(yBlocks, lumQTable);
+            cbBlocks = quantizeAllBlocks(cbBlocks, chromQTable);
+            crBlocks = quantizeAllBlocks(crBlocks, chromQTable);
+            yCoded = zigZagAndRleAllBlocks(yBlocks);
+            cbCoded = zigZagAndRleAllBlocks(cbBlocks);
+            crCoded = zigZagAndRleAllBlocks(crBlocks);
+            List<sbyte> YCbCr = new List<sbyte>();
+            YCbCr.AddRange(yCoded);
+            YCbCr.AddRange(cbCoded);
+            YCbCr.AddRange(crCoded);
+            encoded = YCbCr.ToArray();
+            Debug.WriteLine("" + encoded.Length);
+            //Debug.WriteLine("DONE!");
+            //Debug.WriteLine("OGsize"+((ogBmp.Width*ogBmp.Height)*3));
+            //Debug.WriteLine("Encoded size"+(yCoded.Count+cbCoded.Count+crCoded.Count));
+        }
+
 
         public void convertToYCbCr()
         {
@@ -188,6 +237,58 @@ namespace assignment2
             this.crDoubles = newCr;
         }
 
+        public void upsampleChrominance()
+        {
+            List<List<double>> newCb = new List<List<double>>();
+            List<List<double>> newCr = new List<List<double>>();
+            for (int row = 0; row < height; row++)
+            {
+                if ((row + 1) % 2 != 0)
+                {
+                    newCb.Add(new List<double>());
+                    newCr.Add(new List<double>());
+                    for (int col = 0; col < width; col++)
+                    {
+                        if ((col + 1) % 2 != 0)
+                        {
+                            newCb[row].Add(this.cbDoubles[row/2][col/2]);
+                            newCr[row].Add(this.crDoubles[row/2][col/2]);
+                        }
+                        else
+                        {
+                            newCb[row].Add(newCb[row][col-1]);
+                            newCr[row].Add(newCr[row][col - 1]);
+                        }
+                    }
+                } else
+                {
+                    newCb.Add(this.cbDoubles[row-1]);
+                    newCr.Add(this.crDoubles[row-1]);
+                }
+            }
+            this.cbDoubles = newCb;
+            this.crDoubles = newCr;
+        }
+
+        public List<List<double>> getPixelsFromBlocks(List<List<List<double>>> blocks, int width, int height)
+        {
+            List<List<double>> pixels = new List<List<double>>();
+            int numBlocksAcross = (int)Math.Floor((double)width / 8);
+            for(int row = 0; row < height; row++)
+            {
+                pixels.Add(new List<double>());
+                for (int col = 0; col < width; col++)
+                {
+                    int blockNum = ((row / 8) * (numBlocksAcross)) + (col / 8);
+                    int blockRowIndex = row % 8;
+                    int blockColIndex = col % 8;
+                    double val = blocks[blockNum][blockRowIndex][blockColIndex];
+                    pixels[row].Add(val);
+                }
+            }
+
+            return pixels;
+        }
         public List<List<List<double>>> formBlocks(List<List<double>> oldMatrix, int size)
         {
             int numBlocksAcross = (int)Math.Ceiling((double)oldMatrix[0].Count / size);
@@ -249,10 +350,26 @@ namespace assignment2
             }
         }
 
+        public List<List<List<double>>> dctAllBlocks(List<List<List<double>>> blocks)
+        {
+            for(int i = 0; i < blocks.Count; i++){
+                blocks[i] = dct(blocks[i]);
+            }
+            return blocks;
+        }
+        public List<List<List<double>>> reverseDctAllBlocks(List<List<List<double>>> blocks)
+        {
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                blocks[i] = inverseDct(blocks[i]);
+            }
+            return blocks;
+        }
+
         public List<List<double>> dct(List<List<double>> F)
         {
             List<List<double>> newF = new List<List<double>>();
-            int M = F.Count;
+            int M = 8;
             int N = M;
             for(int u = 0; u < F.Count; u++)
             {
@@ -260,20 +377,49 @@ namespace assignment2
                 for(int v = 0; v < F[u].Count; v++)
                 {
                     double uvVal = 0;
-                    for(int i = 0; i < N; i++)
+                    double lambdaU = u == 0 ? (1 / Math.Sqrt(2)) : 1;
+                    double lambdaV = v == 0 ? (1 / Math.Sqrt(2)) : 1;
+                    for (int i = 0; i < N; i++)
                     {
                         for(int j = 0; j < M; j++)
                         {
-                            double lamdaI = i == 0 ? (1 / Math.Sqrt(2)) : 1;
-                            double lamdaJ = j == 0 ? (1 / Math.Sqrt(2)) : 1;
                             double cosI = cosCalc(u, i, N);
                             double cosJ = cosCalc(v, j, M);
                             double f = F[i][j];
-                            uvVal += (lamdaI * lamdaJ * cosI * cosJ * f);
+                            uvVal +=  (cosI * cosJ * f);
                         }
                     }
-                    uvVal = uvVal * (Math.Pow(2 / N, 1 / 2)) * (Math.Pow(2 / M, 1 / 2));
+                    uvVal = ((2 * lambdaU * lambdaV) / Math.Sqrt(M * N))*uvVal;
                     newF[u].Add(uvVal);
+                }
+            }
+            return newF;
+        }
+
+        public List<List<double>> inverseDct(List<List<double>> F)
+        {
+            List<List<double>> newF = new List<List<double>>();
+            int M = 8;
+            int N = M;
+            for (int i = 0; i < F.Count; i++)
+            {
+                newF.Add(new List<double>());
+                for (int j = 0; j < F[i].Count; j++)
+                {
+                    double uvVal = 0;
+                    for (int u = 0; u < N; u++)
+                    {
+                        for (int v = 0; v < M; v++)
+                        {
+                            double lambdaU = u == 0 ? (1 / Math.Sqrt(2)) : 1;
+                            double lambdaV = v == 0 ? (1 / Math.Sqrt(2)) : 1;
+                            double cosI = cosCalc(u, i, N);
+                            double cosJ = cosCalc(v, j, M);
+                            double f = F[u][v];
+                            uvVal += ((2 * lambdaU * lambdaV) / Math.Sqrt(M * N))*(cosI * cosJ * f);
+                        }
+                    }
+                    newF[i].Add(Math.Round(uvVal));
                 }
             }
             return newF;
@@ -299,6 +445,411 @@ namespace assignment2
                     Console.WriteLine("}");
                 }
         }
+
+        public List<List<List<double>>> quantizeAllBlocks(List<List<List<double>>> blocks, int[,] qTable)
+        {
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                blocks[i] = quantizeBlock(blocks[i], qTable);
+            }
+            return blocks;
+        }
+        public List<List<List<double>>> reverseQuantizeAllBlocks(List<List<List<double>>> blocks, int[,] qTable)
+        {
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                blocks[i] = inverseQuantizeBlock(blocks[i], qTable);
+            }
+            return blocks;
+        }
+
+        public List<List<double>> quantizeBlock(List<List<double>> block, int[,] qTable)
+        {
+            for(int row = 0; row < block.Count; row++)
+            {
+                for(int col = 0; col < block[row].Count; col++)
+                {
+                    block[row][col] = Math.Round(block[row][col] / qTable[row,col]);
+                }
+            }
+            return block;
+        }
+
+        public List<List<double>> inverseQuantizeBlock(List<List<double>> block, int[,] qTable)
+        {
+            for (int row = 0; row < block.Count; row++)
+            {
+                for (int col = 0; col < block[row].Count; col++)
+                {
+                    block[row][col] = Math.Round(block[row][col] * qTable[row, col]);
+                }
+            }
+            return block;
+        }
+
+        public List<sbyte> zigZagAndRleAllBlocks(List<List<List<double>>> blocks)
+        {
+            List<sbyte> encoded = new List<sbyte>();
+            for (int i = 0; i < blocks.Count; i++)
+            {
+                List<sbyte> temp = zigZag(blocks[i], 8, 8);
+                temp = runLengthEncode(temp);
+                encoded.AddRange(temp);
+            }
+            return encoded;
+        }
+
+        public List<List<List<double>>> reverseZigZagAndBuildBlocks(List<sbyte> decoded)
+        {
+            int blockCount = decoded.Count / 64;
+            List<List<List<double>>> blocks = new List<List<List<double>>>();
+            for (int i = 0; i < blockCount; i++)
+            {
+                List<List<double>> temp = reverseZigZag(decoded.GetRange(i*64, 64), 8, 8);
+                blocks.Add(temp);
+            }
+            return blocks;
+        }
+
+        public List<sbyte> zigZag(List<List<double>> arr, int n, int m)
+        {
+            List<sbyte> results = new List<sbyte>();
+            int row = 0, col = 0;
+
+            // Boolean variable that will 
+            // true if we need to increment 
+            // 'row' valueotherwise false- 
+            // if increment 'col' value 
+            bool row_inc = false;
+
+            // Print matrix of lower half 
+            // zig-zag pattern 
+            int mn = Math.Min(m, n);
+            for (int len = 1; len <= mn; ++len)
+            {
+                for (int i = 0; i < len; ++i)
+                {
+
+                    //Debug.Write(arr[row][col] + " ");
+                    results.Add(Convert.ToSByte(arr[row][col]));
+
+                    if (i + 1 == len)
+                        break;
+
+                    // If row_increment value is true 
+                    // increment row and decrement col 
+                    // else decrement row and increment 
+                    // col 
+                    if (row_inc)
+                    {
+                        ++row;
+                        --col;
+                    }
+                    else
+                    {
+                        --row;
+                        ++col;
+                    }
+                }
+
+                if (len == mn)
+                    break;
+
+                // Update row or col valaue 
+                // according to the last 
+                // increment 
+                if (row_inc)
+                {
+                    ++row;
+                    row_inc = false;
+                }
+                else
+                {
+                    ++col;
+                    row_inc = true;
+                }
+            }
+
+            // Update the indexes of row 
+            // and col variable 
+            if (row == 0)
+            {
+                if (col == m - 1)
+                    ++row;
+                else
+                    ++col;
+                row_inc = true;
+            }
+            else
+            {
+                if (row == n - 1)
+                    ++col;
+                else
+                    ++row;
+                row_inc = false;
+            }
+
+            // Print the next half 
+            // zig-zag pattern 
+            int MAX = Math.Max(m, n) - 1;
+            for (int len, diag = MAX; diag > 0; --diag)
+            {
+
+                if (diag > mn)
+                    len = mn;
+                else
+                    len = diag;
+
+                for (int i = 0; i < len; ++i)
+                {
+                    //Debug.Write(arr[row][col] + " ");
+                    results.Add(Convert.ToSByte(arr[row][col]));
+
+                    if (i + 1 == len)
+                        break;
+
+                    // Update row or col value 
+                    // according to the last 
+                    // increment 
+                    if (row_inc)
+                    {
+                        ++row;
+                        --col;
+                    }
+                    else
+                    {
+                        ++col;
+                        --row;
+                    }
+                }
+
+                // Update the indexes of 
+                // row and col variable 
+                if (row == 0 || col == m - 1)
+                {
+                    if (col == m - 1)
+                        ++row;
+                    else
+                        ++col;
+
+                    row_inc = true;
+                }
+
+                else if (col == 0 || row == n - 1)
+                {
+                    if (row == n - 1)
+                        ++col;
+                    else
+                        ++row;
+
+                    row_inc = false;
+                }
+            }
+            return results;
+        }
+
+        public List<List<double>> reverseZigZag(List<sbyte> arr, int n, int m)
+        {
+            List<List<double>> results = new List<List<double>>();
+            int counter = 0;
+            int row = 0, col = 0;
+
+            // Boolean variable that will 
+            // true if we need to increment 
+            // 'row' valueotherwise false- 
+            // if increment 'col' value 
+            bool row_inc = false;
+
+            // Print matrix of lower half 
+            // zig-zag pattern 
+            int mn = Math.Min(m, n);
+            for (int len = 1; len <= mn; ++len)
+            {
+                results.Add(new List<double>());
+                for (int i = 0; i < len; ++i)
+                {
+
+                    //Debug.Write(arr[row][col] + " ");
+                    //results.Add(arr[row][col]);
+                    results[row].Add(arr[counter]);
+                    counter++;
+
+                    if (i + 1 == len)
+                        break;
+
+                    // If row_increment value is true 
+                    // increment row and decrement col 
+                    // else decrement row and increment 
+                    // col 
+                    if (row_inc)
+                    {
+                        ++row;
+                        --col;
+                    }
+                    else
+                    {
+                        --row;
+                        ++col;
+                    }
+                }
+
+                if (len == mn)
+                    break;
+
+                // Update row or col valaue 
+                // according to the last 
+                // increment 
+                if (row_inc)
+                {
+                    ++row;
+                    row_inc = false;
+                }
+                else
+                {
+                    ++col;
+                    row_inc = true;
+                }
+            }
+
+            // Update the indexes of row 
+            // and col variable 
+            if (row == 0)
+            {
+                if (col == m - 1)
+                    ++row;
+                else
+                    ++col;
+                row_inc = true;
+            }
+            else
+            {
+                if (row == n - 1)
+                    ++col;
+                else
+                    ++row;
+                row_inc = false;
+            }
+
+            // Print the next half 
+            // zig-zag pattern 
+            int MAX = Math.Max(m, n) - 1;
+            for (int len, diag = MAX; diag > 0; --diag)
+            {
+
+                if (diag > mn)
+                    len = mn;
+                else
+                    len = diag;
+
+                for (int i = 0; i < len; ++i)
+                {
+                    //Debug.Write(arr[row][col] + " ");
+                    //results.Add(arr[row][col]);
+                    results[row].Add(arr[counter]);
+                    counter++;
+
+                    if (i + 1 == len)
+                        break;
+
+                    // Update row or col value 
+                    // according to the last 
+                    // increment 
+                    if (row_inc)
+                    {
+                        ++row;
+                        --col;
+                    }
+                    else
+                    {
+                        ++col;
+                        --row;
+                    }
+                }
+
+                // Update the indexes of 
+                // row and col variable 
+                if (row == 0 || col == m - 1)
+                {
+                    if (col == m - 1)
+                        ++row;
+                    else
+                        ++col;
+
+                    row_inc = true;
+                }
+
+                else if (col == 0 || row == n - 1)
+                {
+                    if (row == n - 1)
+                        ++col;
+                    else
+                        ++row;
+
+                    row_inc = false;
+                }
+            }
+            return results;
+        }
+
+        public List<sbyte> runLengthEncode(List<sbyte> arr)
+        {
+            List<sbyte> encodedValues = new List<sbyte>();
+            int col = 0;
+            while(col < arr.Count)
+            {
+                sbyte length = 1;
+                while(col + 1 < arr.Count && arr[col+1] == arr[col])
+                {
+                    length++;
+                    col++;
+                }
+                encodedValues.Add(length);
+                encodedValues.Add(arr[col]);
+                col+=length;
+            }
+            return encodedValues;
+        }
+        public List<sbyte> runLengthDecode(sbyte[] arr)
+        {
+            List<sbyte> decodedValues = new List<sbyte>();
+            double col = 0;
+            while (col < arr.Length - 1)
+            {
+                sbyte length = arr[(int)col];
+                sbyte counter = length;
+                sbyte val = arr[(int)(col + 1)];
+                while (counter > 0)
+                {
+                    decodedValues.Add(val);
+                    counter--;
+                }
+                col += (length+1);
+            }
+            return decodedValues;
+        }
+
+
+        public static int[,] lumQTable = new int[,] {
+                { 16, 11,  10, 16, 24, 40, 51, 61},
+                { 12, 12,  14, 19, 26, 58, 60, 55},
+                { 14, 13,  16, 24, 40, 57, 69, 56},
+                { 14, 17,  22, 29, 51, 87, 80, 62},
+                { 18, 22,  37, 56, 68, 109, 103, 77},
+                { 24, 35,  55, 64, 81, 104, 113, 92},
+                { 49, 64,  78, 87, 103, 121, 120, 101},
+                { 72, 92,  95, 98, 112, 100, 103, 99}
+            };
+        public static int[,]
+            chromQTable = new int[,] {
+                { 17, 18, 24, 47, 99, 99, 99, 99},
+                { 18, 21, 26, 66, 99, 99, 99, 99},
+                { 24, 26, 56, 99, 99, 99, 99, 99},
+                { 47, 66, 99, 99, 99, 99, 99, 99},
+                { 99, 99, 99, 99, 99, 99, 99, 99},
+                { 99, 99, 99, 99, 99, 99, 99, 99},
+                { 99, 99, 99, 99, 99, 99, 99, 99},
+                { 99, 99, 99, 99, 99, 99, 99, 99}
+            };
 
     }
 }
