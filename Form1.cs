@@ -16,14 +16,15 @@ namespace assignment2
     {
 
         String filename;
-        Frame IaFrame;
-        Frame IeFrame;
+        IntraFrame IaFrame;
+        InterFrame IeFrame;
+        int num_frames_ready = 0;
 
         public Form1()
         {
             InitializeComponent();
-            this.pictureBox1.SizeMode = PictureBoxSizeMode.AutoSize;
-            this.pictureBox2.SizeMode = PictureBoxSizeMode.AutoSize;
+            this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
         }
 
 
@@ -37,58 +38,81 @@ namespace assignment2
 
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
-                string filename = fileDlg.FileName;
-                Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
-                IaFrame = new IntraFrame(bmp);
-                this.pictureBox1.Image = this.IaFrame.ogBmp;
+                //string filename = fileDlg.FileName;
+                //Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
+                //IaFrame = new IntraFrame(bmp);
+                //this.pictureBox1.Image = this.IaFrame.ogBmp;
                 //ShrunkFileIO sf = new ShrunkFileIO();
             }
         }
 
-        
+
 
         private void button1_Click(object sender, EventArgs e)
         {
-            IaFrame.convertToYCbCr();
-            IaFrame.setCbCrBmp();
-            this.pictureBox1.Image = this.IaFrame.cbBmp;
-        }
-
-        private void YCrCbRGB_Click(object sender, EventArgs e)
-        {
-            IaFrame.subsampleChrominance();
-            IaFrame.setCbCrBmp();
-            this.pictureBox1.Image = this.IaFrame.cbBmp;
-        }
-
-        private void test_Click(object sender, EventArgs e)
-        {
-
             OpenFileDialog fileDlg = new OpenFileDialog();
-            fileDlg.Filter = "Image Files|*.bmp;*.shrunk;";
+            fileDlg.Filter = "Image Files|*.bmp;*.BMP;*.shrunk;";
 
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
                 string filename = fileDlg.FileName;
                 string ext = Path.GetExtension(filename);
                 Debug.WriteLine(ext);
-                if (ext == ".bmp")
+                if (ext == ".bmp" || ext == ".BMP")
                 {
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IaFrame = new IntraFrame(bmp);
                     this.pictureBox1.Image = this.IaFrame.ogBmp;
                     IaFrame.prepFrameForShrink();
+                    num_frames_ready++;
                     ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
-                    bool success = sf.writeFile("dog.shrunk");
+                    bool success = sf.writeFile("intraF.shrunk");
                     Debug.WriteLine(success ? "File Written" : "Error");
                 }
                 if (ext == ".shrunk")
                 {
+                    num_frames_ready--;
                     ShrunkFileIO sf = new ShrunkFileIO(filename);
-                    IaFrame = sf.ioFrame;
+                    IaFrame = (IntraFrame)sf.ioFrame;
                     this.pictureBox1.Image = IaFrame.ogBmp;
-                    IaFrame.setCbCrBmp();
-                    this.pictureBox2.Image = IaFrame.cbBmp;
+                    //IaFrame.setCbCrBmp();
+                    //this.pictureBox2.Image = IaFrame.cbBmp;
+                }
+
+            }
+        }
+
+
+            private void test_Click(object sender, EventArgs e)
+        {
+
+            OpenFileDialog fileDlg = new OpenFileDialog();
+            fileDlg.Filter = "Image Files|*.bmp;*.BMP;*.shrunk;";
+
+            if (fileDlg.ShowDialog() == DialogResult.OK)
+            {
+                string filename = fileDlg.FileName;
+                string ext = Path.GetExtension(filename);
+                Debug.WriteLine(ext);
+                if (ext == ".bmp"|| ext == ".BMP")
+                {
+                    Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
+                    IeFrame = new InterFrame(bmp);
+                    this.pictureBox2.Image = this.IeFrame.ogBmp;
+                    IeFrame.prepFrameForShrink();
+                    num_frames_ready++;
+                    ShrunkFileIO sf = new ShrunkFileIO(IeFrame);
+                    bool success = sf.writeFile("interF.shrunk");
+                    Debug.WriteLine(success ? "File Written" : "Error");
+                }
+                if (ext == ".shrunk")
+                {
+                    num_frames_ready--;
+                    ShrunkFileIO sf = new ShrunkFileIO(filename);
+                    IeFrame = (InterFrame)sf.ioFrame;
+                    this.pictureBox2.Image = IeFrame.ogBmp;
+                    //IaFrame.setCbCrBmp();
+                    //this.pictureBox2.Image = IaFrame.cbBmp;
                 }
             }
 
@@ -162,6 +186,19 @@ namespace assignment2
             //IaFrame = new Frame(vals.ToArray(), 16, 16);
 
 
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            if(num_frames_ready > 1)
+            {
+                IeFrame.mv(IaFrame, 5);
+                this.pictureBox2.Image = IeFrame.drawMotionVectors();
+                //foreach(var mVec in IeFrame.mvY)
+                //{
+                //    Debug.WriteLine("mv-" + mVec[0]+ ":" + mVec[1]);
+                //}
+            }
         }
     }
 }

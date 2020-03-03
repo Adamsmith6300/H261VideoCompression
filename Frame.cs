@@ -278,7 +278,7 @@ namespace assignment2
         public List<List<double>> getPixelsFromBlocks(List<List<List<double>>> blocks, int width, int height)
         {
             List<List<double>> pixels = new List<List<double>>();
-            int numBlocksAcross = (int)Math.Floor((double)width / 8);
+            int numBlocksAcross = (int)Math.Ceiling((double)width / 8);
             for(int row = 0; row < height; row++)
             {
                 pixels.Add(new List<double>());
@@ -474,7 +474,7 @@ namespace assignment2
             {
                 for(int col = 0; col < block[row].Count; col++)
                 {
-                    block[row][col] = Math.Round(block[row][col] / qTable[row,col]);
+                    block[row][col] = Math.Round(block[row][col] / (1*qTable[row,col]));
                 }
             }
             return block;
@@ -486,7 +486,7 @@ namespace assignment2
             {
                 for (int col = 0; col < block[row].Count; col++)
                 {
-                    block[row][col] = Math.Round(block[row][col] * qTable[row, col]);
+                    block[row][col] = Math.Round(block[row][col] * (1*qTable[row, col]));
                 }
             }
             return block;
