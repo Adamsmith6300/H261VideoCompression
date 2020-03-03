@@ -16,7 +16,7 @@ namespace assignment2
     {
 
         String filename;
-        IntraFrame IaFrame;
+        InterFrame IaFrame;
         InterFrame IeFrame;
         int num_frames_ready = 0;
 
@@ -61,7 +61,7 @@ namespace assignment2
                 if (ext == ".bmp" || ext == ".BMP")
                 {
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
-                    IaFrame = new IntraFrame(bmp);
+                    IaFrame = new InterFrame(bmp);
                     this.pictureBox1.Image = this.IaFrame.ogBmp;
                     IaFrame.prepFrameForShrink();
                     num_frames_ready++;
@@ -73,7 +73,7 @@ namespace assignment2
                 {
                     num_frames_ready--;
                     ShrunkFileIO sf = new ShrunkFileIO(filename);
-                    IaFrame = (IntraFrame)sf.ioFrame;
+                    IaFrame = sf.ioFrame;
                     this.pictureBox1.Image = IaFrame.ogBmp;
                     //IaFrame.setCbCrBmp();
                     //this.pictureBox2.Image = IaFrame.cbBmp;
@@ -109,7 +109,7 @@ namespace assignment2
                 {
                     num_frames_ready--;
                     ShrunkFileIO sf = new ShrunkFileIO(filename);
-                    IeFrame = (InterFrame)sf.ioFrame;
+                    IeFrame = sf.ioFrame;
                     this.pictureBox2.Image = IeFrame.ogBmp;
                     //IaFrame.setCbCrBmp();
                     //this.pictureBox2.Image = IaFrame.cbBmp;

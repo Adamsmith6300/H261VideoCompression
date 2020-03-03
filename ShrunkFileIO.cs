@@ -10,12 +10,12 @@ namespace assignment2
 {
     class ShrunkFileIO
     {
-        public Frame ioFrame { get; set; }
+        public InterFrame ioFrame { get; set; }
         public byte[] frameAsBytes { get; set; }
         public int width { get; set; }
         public int height { get; set; }
 
-        public ShrunkFileIO(Frame f)
+        public ShrunkFileIO(InterFrame f)
         {
             ioFrame = f;
             frameAsBytes = GetBytes(f.encoded);
@@ -28,7 +28,7 @@ namespace assignment2
             if (read)
             {
                 sbyte[] sbytes = Array.ConvertAll(frameAsBytes, b => (sbyte)b);
-                ioFrame = new Frame(sbytes, width, height);
+                ioFrame = new InterFrame(sbytes, width, height);
                 //for (int i = 0; i < sbytes.Length; i++)
                 //{
                 //    Debug.Write(sbytes[i] + ",");

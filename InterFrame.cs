@@ -18,6 +18,11 @@ namespace assignment2
         {
         }
 
+        public InterFrame(sbyte[] sbytes, int w, int h): base(sbytes, w, h)
+        {
+
+        }
+
         public void mv(Frame rFrame, int p)
         {
             this.rFrame = rFrame;
