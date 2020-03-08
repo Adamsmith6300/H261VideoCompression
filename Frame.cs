@@ -803,14 +803,21 @@ namespace assignment2
             int col = 0;
             while(col < arr.Count)
             {
-                sbyte length = 1;
-                while(col + 1 < arr.Count && arr[col+1] == arr[col])
+                if(arr[col] == 0)
                 {
-                    length++;
-                    col++;
+                    sbyte length = 1;
+                    while (col + 1 < arr.Count && arr[col + 1] == arr[col])
+                    {
+                        length++;
+                        col++;
+                    }
+                    encodedValues.Add(0);
+                    encodedValues.Add(length);
+                } else
+                {
+                    encodedValues.Add(arr[col]);
                 }
-                encodedValues.Add(length);
-                encodedValues.Add(arr[col]);
+                
                 col++;
             }
             return encodedValues;
@@ -818,18 +825,26 @@ namespace assignment2
         public List<sbyte> runLengthDecode(sbyte[] arr)
         {
             List<sbyte> decodedValues = new List<sbyte>();
-            double col = 0;
-            while (col < arr.Length - 1)
+            int col = 0;
+            while (col < arr.Length)
             {
-                sbyte length = arr[(int)col];
-                sbyte counter = length;
-                sbyte val = arr[(int)(col + 1)];
-                while (counter > 0)
+                if(arr[col] == 0)
                 {
+                    sbyte length = arr[(col + 1)];
+                    sbyte counter = length;
+                    while (counter > 0)
+                    {
+                        decodedValues.Add(0);
+                        counter--;
+                    }
+                    col += 2;
+                } else
+                {
+                    sbyte val = arr[col];
                     decodedValues.Add(val);
-                    counter--;
+                    col++;
                 }
-                col+=2;
+
             }
             return decodedValues;
         }

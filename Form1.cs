@@ -94,7 +94,7 @@ namespace assignment2
                 string filename = fileDlg.FileName;
                 string ext = Path.GetExtension(filename);
                 Debug.WriteLine(ext);
-                if (ext == ".bmp"|| ext == ".BMP")
+                if (ext == ".bmp" || ext == ".BMP")
                 {
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IeFrame = new InterFrame(bmp);
@@ -166,24 +166,24 @@ namespace assignment2
             //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
             //}
             //};
-            //IaFrame = new Frame();
-            //testVals = IaFrame.dctAllBlocks(testVals);
-            //testVals = IaFrame.quantizeAllBlocks(testVals, Frame.lumQTable);
+            //Frame f = new Frame();
+            //testVals = f.dctAllBlocks(testVals);
+            //testVals = f.quantizeAllBlocks(testVals, Frame.lumQTable);
             ////IaFrame.printBlocks(testVals);
-            //List<sbyte> vals = IaFrame.zigZagAllBlocks(testVals);
+            //List<sbyte> vals = f.zigZagAllBlocks(testVals);
 
             //Debug.WriteLine("before:");
-            //vals = IaFrame.runLengthEncode(vals);
+            //vals = f.runLengthEncode(vals);
             //for (int i = 0; i < vals.Count; i++)
             //{
             //    Debug.Write(vals[i] + ",");
             //}
-            //vals = IaFrame.runLengthDecode(vals.ToArray());
+            //Debug.WriteLine("after:");
+            //vals = f.runLengthDecode(vals.ToArray());
             //for (int i = 0; i < vals.Count; i++)
             //{
             //    Debug.Write(vals[i] + ",");
             //}
-            //IaFrame = new Frame(vals.ToArray(), 16, 16);
 
 
         }
