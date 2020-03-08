@@ -192,7 +192,7 @@ namespace assignment2
         {
             if(num_frames_ready > 1)
             {
-                IeFrame.mv(IaFrame, 5);
+                IeFrame.mv(IaFrame, 10);
                 this.pictureBox2.Image = IeFrame.drawMotionVectors();
                 //foreach(var mVec in IeFrame.mvY)
                 //{
