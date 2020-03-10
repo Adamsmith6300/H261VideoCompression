@@ -45,11 +45,11 @@ namespace assignment2
             encoded = sbytes;
             width = w;
             height = h;
-            decodeBytes();
+            decompressFrame();
         }
         public Frame() { }
 
-        public void decodeBytes()
+        public void decompressFrame()
         {
             List<sbyte> decoded = runLengthDecode(encoded);
             Debug.WriteLine("Dec" + decoded.Count);
@@ -78,7 +78,7 @@ namespace assignment2
             upsampleChrominance();
             convertToRGB();
         }
-        public void prepFrameForShrink()
+        public void compressFrame()
         {
             convertToYCbCr();
             subsampleChrominance();

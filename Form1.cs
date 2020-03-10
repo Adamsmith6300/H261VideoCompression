@@ -63,11 +63,11 @@ namespace assignment2
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IaFrame = new InterFrame(bmp);
                     this.pictureBox1.Image = this.IaFrame.ogBmp;
-                    IaFrame.prepFrameForShrink();
+                    IaFrame.compressFrame();
                     num_frames_ready++;
-                    ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
-                    bool success = sf.writeFile("intraF.shrunk");
-                    Debug.WriteLine(success ? "File Written" : "Error");
+                    //ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
+                    //bool success = sf.writeFile("intraF.shrunk");
+                    //Debug.WriteLine(success ? "File Written" : "Error");
                 }
                 if (ext == ".shrunk")
                 {
@@ -99,11 +99,11 @@ namespace assignment2
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IeFrame = new InterFrame(bmp);
                     this.pictureBox2.Image = this.IeFrame.ogBmp;
-                    IeFrame.prepFrameForShrink();
+                    IeFrame.compressFrame();
                     num_frames_ready++;
-                    ShrunkFileIO sf = new ShrunkFileIO(IeFrame);
-                    bool success = sf.writeFile("interF.shrunk");
-                    Debug.WriteLine(success ? "File Written" : "Error");
+                    //ShrunkFileIO sf = new ShrunkFileIO(IeFrame);
+                    //bool success = sf.writeFile("interF.shrunk");
+                    //Debug.WriteLine(success ? "File Written" : "Error");
                 }
                 if (ext == ".shrunk")
                 {
@@ -192,7 +192,7 @@ namespace assignment2
         {
             if(num_frames_ready > 1)
             {
-                IeFrame.mv(IaFrame, 10);
+                IeFrame.generateMv(IaFrame, 8);
                 this.pictureBox2.Image = IeFrame.drawMotionVectors();
                 //foreach(var mVec in IeFrame.mvY)
                 //{

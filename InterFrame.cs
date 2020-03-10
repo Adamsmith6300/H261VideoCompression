@@ -11,9 +11,16 @@ namespace assignment2
     class InterFrame : Frame
     {
         public Frame rFrame { get; set; }
-        public List<List<List<int>>> mvY { get; set; }
-        public List<List<List<int>>> mvCb { get; set; }
-        public List<List<List<int>>> mvCr { get; set; }
+        public List<List<MV>> mvY { get; set; }
+        public List<List<MV>> mvCb { get; set; }
+        public List<List<MV>> mvCr { get; set; }
+        public List<List<double>> yDiffs { get; set; }
+        public List<List<double>> cbDiffs { get; set; }
+        public List<List<double>> crDiffs { get; set; }
+        public List<List<List<double>>> yDiffBlocks { get; set; }
+        public List<List<List<double>>> cbDiffBlocks { get; set; }
+        public List<List<List<double>>> crDiffBlocks { get; set; }
+
         public InterFrame(Bitmap bmp): base(bmp)
         {
         }
@@ -23,23 +30,36 @@ namespace assignment2
 
         }
 
-        public void mv(Frame rFrame, int p)
+        public void generateDiffBlocks()
+        {
+            yDiffs = generateDiffs(mvY, this.yDoubles, rFrame.yDoubles);
+        }
+
+        public List<List<double>> generateDiffs(List<List<MV>> mv, List<List<double>> target, List<List<double>> reference)
+        {
+            List<List<double>> diffs = new List<List<double>>();
+
+
+            return diffs;
+        }
+
+        public void generateMv(Frame rFrame, int p)
         {
             this.rFrame = rFrame;
             Debug.Write(this.yDoubles.Count + ":" + rFrame.yDoubles.Count);
             mvY = mvSearch(p, 8, this.yDoubles, rFrame.yDoubles);
         }
 
-        public List<List<List<int>>> mvSearch(int p, int n, List<List<double>> target, List<List<double>> reference)
+        public List<List<MV>> mvSearch(int p, int n, List<List<double>> target, List<List<double>> reference)
         {
             //int blocksAcross = target.Count / n;
             //int blocksDown = target.Count / n;
-            List<List<List<int>>> motionVectors = new List<List<List<int>>>();
+            List<List<MV>> motionVectors = new List<List<MV>>();
 
             //loop through each block in target frame
             for(int row = 0; row < target.Count; row+=n)
             {
-                motionVectors.Add(new List<List<int>>());
+                motionVectors.Add(new List<MV>());
                 for(int col = 0; col < target[row].Count; col+=n)
                 {
                     int u = row, v = col;
@@ -57,7 +77,7 @@ namespace assignment2
                             }
                         }
                     }
-                    motionVectors[row/n].Add(new List<int> { u, v });
+                    motionVectors[row/n].Add(new MV(u, v));
                 }
             }
             return motionVectors;
@@ -101,8 +121,8 @@ namespace assignment2
                 {
                     int startX = row + 4;
                     int startY = col + 4;
-                    int endX = startX + mvY[row/8][col/8][0];
-                    int endY = startY + mvY[row/8][col/8][1];
+                    int endX = startX + mvY[row/8][col/8].x;
+                    int endY = startY + mvY[row/8][col/8].y;
                     using (var graphics = Graphics.FromImage(ogBmp))
                     {
                         if(startX == endX && startY == endY)
