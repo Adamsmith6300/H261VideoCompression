@@ -32,8 +32,6 @@ namespace assignment2
             this.ogBmp = bmp;
             this.width = bmp.Width;
             this.height = bmp.Height;
-            Debug.Write("width" + width);
-            Debug.Write("height" + height);
             this.cbBmp = new Bitmap(bmp.Width,bmp.Height);
             this.crBmp = new Bitmap(bmp.Width,bmp.Height);
             this.yDoubles = new List<List<double>>();
@@ -52,17 +50,12 @@ namespace assignment2
         public void decompressFrame()
         {
             List<sbyte> decoded = runLengthDecode(encoded);
-            Debug.WriteLine("Dec" + decoded.Count);
             int yCount = (decoded.Count * 2)/ 3;
             int chromCount = yCount / 4;
             this.ogBmp = new Bitmap(width, height);
             yCoded = decoded.GetRange(0, yCount);
             cbCoded = decoded.GetRange(yCount, chromCount);
             crCoded = decoded.GetRange(yCount + chromCount, chromCount);
-            //for (int i = 0; i < yCoded.Count; i++)
-            //{
-            //    Debug.Write(yCoded[i] + ",");
-            //}
             yBlocks = reverseZigZagAndBuildBlocks(yCoded);
             cbBlocks = reverseZigZagAndBuildBlocks(cbCoded);
             crBlocks = reverseZigZagAndBuildBlocks(crCoded);
@@ -75,13 +68,23 @@ namespace assignment2
             yDoubles = getPixelsFromBlocks(yBlocks, width, height);
             cbDoubles = getPixelsFromBlocks(cbBlocks, width / 2, height / 2);
             crDoubles = getPixelsFromBlocks(crBlocks, width / 2, height / 2);
+        }
+        public void upsampleAndRGB()
+        {
             upsampleChrominance();
             convertToRGB();
         }
-        public void compressFrame()
+        public void subSampleAndYCbCr()
         {
+            this.yDoubles = new List<List<double>>();
+            this.cbDoubles = new List<List<double>>();
+            this.crDoubles = new List<List<double>>();
             convertToYCbCr();
             subsampleChrominance();
+        }
+        public void compressFrame()
+        {
+            
             buildYBlocks();
             buildCbBlocks();
             buildCrBlocks();
@@ -94,7 +97,6 @@ namespace assignment2
             yCoded = zigZagAllBlocks(yBlocks);
             cbCoded = zigZagAllBlocks(cbBlocks);
             crCoded = zigZagAllBlocks(crBlocks);
-            Debug.WriteLine("enc"+ (yCoded.Count+ cbCoded.Count+ crCoded.Count));
             yCoded = runLengthEncode(yCoded);
             cbCoded = runLengthEncode(cbCoded);
             crCoded = runLengthEncode(crCoded);
@@ -535,8 +537,6 @@ namespace assignment2
             {
                 for (int i = 0; i < len; ++i)
                 {
-
-                    //Debug.Write(arr[row][col] + " ");
                     results.Add(Convert.ToSByte(arr[row][col]));
 
                     if (i + 1 == len)
@@ -608,7 +608,6 @@ namespace assignment2
 
                 for (int i = 0; i < len; ++i)
                 {
-                    //Debug.Write(arr[row][col] + " ");
                     results.Add(Convert.ToSByte(arr[row][col]));
 
                     if (i + 1 == len)
@@ -674,9 +673,6 @@ namespace assignment2
                 results.Add(new List<double>());
                 for (int i = 0; i < len; ++i)
                 {
-
-                    //Debug.Write(arr[row][col] + " ");
-                    //results.Add(arr[row][col]);
                     results[row].Add(arr[counter]);
                     counter++;
 
@@ -749,8 +745,6 @@ namespace assignment2
 
                 for (int i = 0; i < len; ++i)
                 {
-                    //Debug.Write(arr[row][col] + " ");
-                    //results.Add(arr[row][col]);
                     results[row].Add(arr[counter]);
                     counter++;
 
@@ -810,6 +804,7 @@ namespace assignment2
                     {
                         length++;
                         col++;
+                        if (length == 127) break;
                     }
                     encodedValues.Add(0);
                     encodedValues.Add(length);
@@ -817,8 +812,8 @@ namespace assignment2
                 {
                     encodedValues.Add(arr[col]);
                 }
-                
                 col++;
+                
             }
             return encodedValues;
         }
@@ -849,7 +844,26 @@ namespace assignment2
             return decodedValues;
         }
 
-
+        //public static int[,] diffQTable = new int[,] {
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8},
+        //        { 8,8,8,8,8,8,8,8}
+        //    };
+        public static int[,] diffQTable = new int[,] {
+                { 8,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30},
+                { 30,30,30,30,30,30,30,30}
+            };
         public static int[,] lumQTable = new int[,] {
                 { 16, 11,  10, 16, 24, 40, 51, 61},
                 { 12, 12,  14, 19, 26, 58, 60, 55},

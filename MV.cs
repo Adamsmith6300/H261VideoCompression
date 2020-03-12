@@ -8,10 +8,10 @@ namespace assignment2
 {
     class MV
     {
-        public int x { get; set; }
-        public int y { get; set; }
+        public sbyte x { get; set; }
+        public sbyte y { get; set; }
         public MV() { }
-        public MV(int newX, int newY)
+        public MV(sbyte newX, sbyte newY)
         {
             x = newX;
             y = newY;

@@ -14,17 +14,20 @@ namespace assignment2
 {
     public partial class Form1 : Form
     {
-
-        String filename;
         InterFrame IaFrame;
         InterFrame IeFrame;
         int num_frames_ready = 0;
+        int pValue = 8;
 
         public Form1()
         {
             InitializeComponent();
-            this.pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
-            this.pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox1.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
+            numericUpDown1.Value = 8;
+            numericUpDown1.Maximum = 15;
+            numericUpDown1.Minimum = 1;
+            numericUpDown1.DecimalPlaces = 0;
         }
 
 
@@ -33,16 +36,40 @@ namespace assignment2
         /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
         private void openToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
+            SaveFileDialog saveFileDialog1 = new SaveFileDialog();
+            saveFileDialog1.Title = "Save an Image File";
+            saveFileDialog1.ShowDialog();
+            pValue = (int)numericUpDown1.Value;
+            if (saveFileDialog1.FileName != "" && num_frames_ready > 1)
+            {
+                IeFrame.generateMv(IaFrame, pValue);
+                IaFrame.decompressFrame();
+                IeFrame.compressInterFrame();
+                IaFrame.compressFrame();
+                ShrunkFileIO sf = new ShrunkFileIO(IaFrame, IeFrame);
+                sf.writeFile(saveFileDialog1.FileName);
+                Debug.WriteLine("Finished Compressing/Writing to file...");
+                this.pictureBox2.Image = IeFrame.drawMotionVectors();
+                this.Text = "Compression Ratio: " + sf.compressionRatio;
+            }
+
+        }
+
+        private void openToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
             OpenFileDialog fileDlg = new OpenFileDialog();
-            fileDlg.Filter = "Image (*bmp)|*.bmp|All Files|*.*";
+            fileDlg.Filter = "Shrunk (*shrunk)|*.shrunk";
 
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
-                //string filename = fileDlg.FileName;
-                //Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
-                //IaFrame = new IntraFrame(bmp);
-                //this.pictureBox1.Image = this.IaFrame.ogBmp;
-                //ShrunkFileIO sf = new ShrunkFileIO();
+                string filename = fileDlg.FileName;
+                string ext = Path.GetExtension(filename);
+                if (ext == ".shrunk")
+                {
+                    ShrunkFileIO sf = new ShrunkFileIO(filename);
+                    this.pictureBox1.Image = sf.iaFrame.ogBmp;
+                    this.pictureBox2.Image = sf.ieFrame.ogBmp;
+                }
             }
         }
 
@@ -52,153 +79,47 @@ namespace assignment2
         {
             OpenFileDialog fileDlg = new OpenFileDialog();
             fileDlg.Filter = "Image Files|*.bmp;*.BMP;*.shrunk;";
-
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
                 string filename = fileDlg.FileName;
                 string ext = Path.GetExtension(filename);
-                Debug.WriteLine(ext);
                 if (ext == ".bmp" || ext == ".BMP")
                 {
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IaFrame = new InterFrame(bmp);
                     this.pictureBox1.Image = this.IaFrame.ogBmp;
+                    IaFrame.subSampleAndYCbCr();
                     IaFrame.compressFrame();
                     num_frames_ready++;
-                    //ShrunkFileIO sf = new ShrunkFileIO(IaFrame);
-                    //bool success = sf.writeFile("intraF.shrunk");
-                    //Debug.WriteLine(success ? "File Written" : "Error");
                 }
-                if (ext == ".shrunk")
-                {
-                    num_frames_ready--;
-                    ShrunkFileIO sf = new ShrunkFileIO(filename);
-                    IaFrame = sf.ioFrame;
-                    this.pictureBox1.Image = IaFrame.ogBmp;
-                    //IaFrame.setCbCrBmp();
-                    //this.pictureBox2.Image = IaFrame.cbBmp;
-                }
-
+                
             }
         }
 
 
-            private void test_Click(object sender, EventArgs e)
+        private void test_Click(object sender, EventArgs e)
         {
 
             OpenFileDialog fileDlg = new OpenFileDialog();
             fileDlg.Filter = "Image Files|*.bmp;*.BMP;*.shrunk;";
-
             if (fileDlg.ShowDialog() == DialogResult.OK)
             {
                 string filename = fileDlg.FileName;
                 string ext = Path.GetExtension(filename);
-                Debug.WriteLine(ext);
                 if (ext == ".bmp" || ext == ".BMP")
                 {
                     Bitmap bmp = (System.Drawing.Bitmap)Image.FromFile(filename);
                     IeFrame = new InterFrame(bmp);
                     this.pictureBox2.Image = this.IeFrame.ogBmp;
-                    IeFrame.compressFrame();
+                    IeFrame.prepInterFrame();
                     num_frames_ready++;
-                    //ShrunkFileIO sf = new ShrunkFileIO(IeFrame);
-                    //bool success = sf.writeFile("interF.shrunk");
-                    //Debug.WriteLine(success ? "File Written" : "Error");
-                }
-                if (ext == ".shrunk")
-                {
-                    num_frames_ready--;
-                    ShrunkFileIO sf = new ShrunkFileIO(filename);
-                    IeFrame = sf.ioFrame;
-                    this.pictureBox2.Image = IeFrame.ogBmp;
-                    //IaFrame.setCbCrBmp();
-                    //this.pictureBox2.Image = IaFrame.cbBmp;
                 }
             }
-
-            //ShrunkFileIO sf = new ShrunkFileIO();
-
-            //IaFrame.prepFrameForShrink();
-            //bool success = sf.writeFile("dog");
-            //Debug.WriteLine(success?"File Written":"Error");
-
-            //List<List<List<double>>> testVals = new List<List<List<double>>> {
-            //new List<List<double>> {
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
-            //},
-            //new List<List<double>>{
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
-            //},
-            //new List<List<double>>
-            //{
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
-            //},
-            //new List<List<double>>
-            //{
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 },
-            //    new List<double> { 0, 1, 2, 3, 4, 5, 6, 7 }
-            //}
-            //};
-            //Frame f = new Frame();
-            //testVals = f.dctAllBlocks(testVals);
-            //testVals = f.quantizeAllBlocks(testVals, Frame.lumQTable);
-            ////IaFrame.printBlocks(testVals);
-            //List<sbyte> vals = f.zigZagAllBlocks(testVals);
-
-            //Debug.WriteLine("before:");
-            //vals = f.runLengthEncode(vals);
-            //for (int i = 0; i < vals.Count; i++)
-            //{
-            //    Debug.Write(vals[i] + ",");
-            //}
-            //Debug.WriteLine("after:");
-            //vals = f.runLengthDecode(vals.ToArray());
-            //for (int i = 0; i < vals.Count; i++)
-            //{
-            //    Debug.Write(vals[i] + ",");
-            //}
-
-
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            if(num_frames_ready > 1)
-            {
-                IeFrame.generateMv(IaFrame, 8);
-                this.pictureBox2.Image = IeFrame.drawMotionVectors();
-                //foreach(var mVec in IeFrame.mvY)
-                //{
-                //    Debug.WriteLine("mv-" + mVec[0]+ ":" + mVec[1]);
-                //}
-            }
+            numericUpDown1.Value = Decimal.Round(numericUpDown1.Value, 0);
         }
     }
 }
