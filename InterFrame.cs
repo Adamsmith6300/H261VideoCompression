@@ -31,7 +31,7 @@ namespace assignment2
         public InterFrame(sbyte[] frameBytes, int w, int h): base(frameBytes, w, h)
         {
         }
-        public InterFrame(Frame _iFrame, sbyte[] frameBytes, int w, int h, byte[] _mvYBytes, byte[] _mvCbBytes, byte[] _mvCrBytes)
+        public InterFrame(Frame _iFrame, sbyte[] frameBytes, int w, int h, byte[] _mvYBytes, byte[] _mvCbBytes)
         {
             iFrame = _iFrame;
             width = w;
@@ -39,7 +39,6 @@ namespace assignment2
             encoded = frameBytes;
             mvYBytes = _mvYBytes;
             mvCbBytes = _mvCbBytes;
-            mvCrBytes = _mvCrBytes;
             decompressInterFrame();
         }
 
@@ -82,7 +81,7 @@ namespace assignment2
 
             yDoubles = generateDoublesFromDiffs(mvY, yDiffs, iFrame.yDoubles);
             cbDoubles = generateDoublesFromDiffs(mvCb, cbDiffs, iFrame.cbDoubles);
-            crDoubles = generateDoublesFromDiffs(mvCr, crDiffs, iFrame.crDoubles);
+            crDoubles = generateDoublesFromDiffs(mvCb, crDiffs, iFrame.crDoubles);
             upsampleChrominance();
             convertToRGB();
         }
@@ -90,7 +89,7 @@ namespace assignment2
         {
             yDiffs = generateDiffs(mvY, this.yDoubles, iFrame.yDoubles);
             cbDiffs = generateDiffs(mvCb, this.cbDoubles, iFrame.cbDoubles);
-            crDiffs = generateDiffs(mvCr, this.crDoubles, iFrame.crDoubles);
+            crDiffs = generateDiffs(mvCb, this.crDoubles, iFrame.crDoubles);
             
             yDiffBlocks = formBlocks(yDiffs, 8);
             cbDiffBlocks = formBlocks(cbDiffs, 8);
@@ -130,7 +129,7 @@ namespace assignment2
                 {
                     int mvX = mv[(int)Math.Floor((double)row / 8)][(int)Math.Floor((double)col / 8)].x;
                     int mvY = mv[(int)Math.Floor((double)row / 8)][(int)Math.Floor((double)col / 8)].y;
-                    double val = diffs[row][col] + reference[row - mvY][col - mvX];
+                    double val = diffs[row][col] + reference[row + mvX][col + mvY];
                     values[row].Add(val);
                 }
             }
@@ -146,7 +145,7 @@ namespace assignment2
                 {
                     int mvX = mv[row/8][col/8].x;
                     int mvY = mv[row/8][col/8].y;
-                    double diff = target[row][col] - reference[row+ mvX][col+ mvY];
+                    double diff = target[row][col] - reference[row + mvX][col + mvY];
                     diffs[row].Add(diff);
                 }
             }
@@ -162,13 +161,13 @@ namespace assignment2
             mvWidth /= 2;
             mvHeight /= 2;
             mvCb = bytesGetMV(mvCbBytes, mvWidth, mvHeight);
-            mvCr = bytesGetMV(mvCrBytes, mvWidth, mvHeight);
+            //mvCr = bytesGetMV(mvCrBytes, mvWidth, mvHeight);
         }
         public void convertMVToBytes()
         {
             mvYBytes = mvGetBytes(mvY);
             mvCbBytes = mvGetBytes(mvCb);
-            mvCrBytes = mvGetBytes(mvCr);
+            //mvCrBytes = mvGetBytes(mvCr);
         }
         public List<List<MV>> bytesGetMV(byte[] mvBytes, int mvWidth, int mvHeight)
         {
@@ -209,7 +208,7 @@ namespace assignment2
             this.iFrame = iFrame;
             mvY = mvSearch(p, 8, this.yDoubles, iFrame.yDoubles);
             mvCb = mvSearch(p, 8, this.cbDoubles, iFrame.cbDoubles);
-            mvCr = mvSearch(p, 8, this.crDoubles, iFrame.crDoubles);
+            //mvCr = mvSearch(p, 8, this.crDoubles, iFrame.crDoubles);
         }
 
         public List<List<MV>> mvSearch(int p, int n, List<List<double>> target, List<List<double>> reference)
@@ -236,6 +235,22 @@ namespace assignment2
                             }
                         }
                     }
+                    if(row + u < 0 || row + u >= target.Count || row + u + n >= target.Count)
+                    {
+                        u = 0;
+                    }
+                    if (col + v < 0 || col + v >= target[0].Count || col + v + n >= target[0].Count)
+                    {
+                        v = 0;
+                    }
+                    //if(u < 0 || v < 0)
+                    //{
+                    //    Debug.WriteLine("u:", u.ToString());
+                    //    Debug.WriteLine("v:", v.ToString());
+                    //    Debug.WriteLine("row:", row.ToString());
+                    //    Debug.WriteLine("col:", col.ToString());
+                    //    Debug.WriteLine("----------");
+                    //}
                     motionVectors[row/n].Add(new MV(u, v));
                 }
             }

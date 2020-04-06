@@ -537,7 +537,7 @@ namespace assignment2
             {
                 for (int i = 0; i < len; ++i)
                 {
-                    results.Add(Convert.ToSByte(arr[row][col]));
+                    results.Add(Convert.ToSByte(Math.Max(-128,Math.Min(127,arr[row][col]))));
 
                     if (i + 1 == len)
                         break;
@@ -608,7 +608,7 @@ namespace assignment2
 
                 for (int i = 0; i < len; ++i)
                 {
-                    results.Add(Convert.ToSByte(arr[row][col]));
+                    results.Add(Convert.ToSByte(Math.Max(-128,Math.Min(127,arr[row][col]))));
 
                     if (i + 1 == len)
                         break;

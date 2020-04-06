@@ -45,7 +45,7 @@ namespace assignment2
                 sbyte[] iaFrameSignedBytes = Array.ConvertAll(iaFrameBytes, b => (sbyte)b);
                 sbyte[] ieFrameSignedBytes = Array.ConvertAll(ieFrameBytes, b => (sbyte)b);
                 iaFrame = new InterFrame(iaFrameSignedBytes, width, height);
-                ieFrame = new InterFrame(iaFrame, ieFrameSignedBytes, width, height, mvYBytes, mvCbBytes, mvCrBytes);
+                ieFrame = new InterFrame(iaFrame, ieFrameSignedBytes, width, height, mvYBytes, mvCbBytes);
                 iaFrame.upsampleAndRGB();
             }
             
@@ -85,7 +85,7 @@ namespace assignment2
                 ieFrameBytes = new byte[ieLength];
                 mvYBytes = new byte[mvYLength];
                 mvCbBytes = new byte[mvYLength/4];
-                mvCrBytes = new byte[mvYLength/4];
+                //mvCrBytes = new byte[mvYLength/4];
                 int offset = 0;
                 Buffer.BlockCopy(fileData, offset, iaFrameBytes, 0, iaFrameBytes.Length);
                 offset += iaFrameBytes.Length;
@@ -94,8 +94,8 @@ namespace assignment2
                 Buffer.BlockCopy(fileData, offset, mvYBytes, 0, mvYBytes.Length);
                 offset += mvYBytes.Length;
                 Buffer.BlockCopy(fileData, offset, mvCbBytes, 0, mvCbBytes.Length);
-                offset += mvCbBytes.Length;
-                Buffer.BlockCopy(fileData, offset, mvCrBytes, 0, mvCrBytes.Length);
+                //offset += mvCbBytes.Length;
+                //Buffer.BlockCopy(fileData, offset, mvCrBytes, 0, mvCrBytes.Length);
 
                 //Debug.WriteLine("rwidth" + width);
                 //Debug.WriteLine("rheight" + height);
@@ -126,7 +126,7 @@ namespace assignment2
 
                     fs.Write(ieFrame.mvYBytes, 0, ieFrame.mvYBytes.Length);
                     fs.Write(ieFrame.mvCbBytes, 0, ieFrame.mvCbBytes.Length);
-                    fs.Write(ieFrame.mvCrBytes, 0, ieFrame.mvCrBytes.Length);
+                    //fs.Write(ieFrame.mvCrBytes, 0, ieFrame.mvCrBytes.Length);
 
                     byte[] iaBytesLength = BitConverter.GetBytes(iaFrameBytes.Length);
                     byte[] ieBytesLength = BitConverter.GetBytes(ieFrameBytes.Length);
@@ -149,8 +149,8 @@ namespace assignment2
                     double compressedSize = iaFrameBytes.Length
                         + ieFrameBytes.Length
                         + ieFrame.mvYBytes.Length
-                        + ieFrame.mvCbBytes.Length
-                        + ieFrame.mvCrBytes.Length;
+                        + ieFrame.mvCbBytes.Length;
+                        //+ ieFrame.mvCrBytes.Length;
                     compressionRatio = originalSize / compressedSize;
                     Debug.WriteLine("Original: "+ originalSize);
                     Debug.WriteLine("Compressed: "+ compressedSize);

@@ -43,9 +43,9 @@ namespace assignment2
             if (saveFileDialog1.FileName != "" && num_frames_ready > 1)
             {
                 IeFrame.generateMv(IaFrame, pValue);
-                IaFrame.decompressFrame();
+                //IaFrame.decompressFrame();
                 IeFrame.compressInterFrame();
-                IaFrame.compressFrame();
+                //IaFrame.compressFrame();
                 ShrunkFileIO sf = new ShrunkFileIO(IaFrame, IeFrame);
                 sf.writeFile(saveFileDialog1.FileName);
                 Debug.WriteLine("Finished Compressing/Writing to file...");
